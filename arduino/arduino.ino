@@ -14,7 +14,7 @@ int lastSensorState = 0;
 float inicio = 0;
 unsigned long lastPressTime = 0;
 unsigned long lastLastPressTime = 0;
-bool sensorPressed = false;
+// bool sensorPressed = false;
 unsigned long currentTime = millis();
 
 int buttonErase = 7;  // Pino do botão
@@ -59,8 +59,8 @@ void loop() {
     currentSensorState = digitalRead(sensorPin);
 
     if (currentSensorState == HIGH && lastSensorState == LOW) {
-        if (!sensorPressed) {
-            sensorPressed = true;
+        // if (!sensorPressed) {
+        //     sensorPressed = true;
             lastLastPressTime = lastPressTime;
             lastPressTime = currentTime;
 
@@ -69,19 +69,19 @@ void loop() {
             lcd.setCursor(0, 1);
             lcd.print("Voltas: " + String(turnCount));
 
-            Serial.print("Count: ");
-            Serial.println(turnCount);
+        //     Serial.print("Count: ");
+        //     Serial.println(turnCount);
 
             if (turnCount == 1) {
                 inicio = currentTime;
             }
-        }  
+        // }  
     } else {
         lastSensorState = LOW;
     }
   
     if (digitalRead(sensorPin) == HIGH) {
-        sensorPressed = false;
+        // sensorPressed = false;
         lastSensorState = LOW;
     }
 
@@ -126,7 +126,7 @@ void limpar(){
   turnCount = 0;
   lastPressTime = currentTime;
   inicio = currentTime;
-  sensorPressed = false;
+  // sensorPressed = false;
   Serial.println("Resetting count.");
   delay(1000);
   lcd.clear();
