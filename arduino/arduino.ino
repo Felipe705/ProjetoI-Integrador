@@ -14,7 +14,7 @@ int lastSensorState = 0;
 float inicio = 0;
 unsigned long lastPressTime = 0;
 unsigned long lastLastPressTime = 0;
-// bool sensorPressed = false;
+bool sensorPressed = false;
 unsigned long currentTime = millis();
 
 int buttonErase = 7;  // Pino do botão
@@ -59,8 +59,8 @@ void loop() {
     currentSensorState = digitalRead(sensorPin);
 
     if (currentSensorState == HIGH && lastSensorState == LOW) {
-        // if (!sensorPressed) {
-        //     sensorPressed = true;
+        if (!sensorPressed) {
+            sensorPressed = true;
             lastLastPressTime = lastPressTime;
             lastPressTime = currentTime;
 
@@ -69,19 +69,19 @@ void loop() {
             lcd.setCursor(0, 1);
             lcd.print("Voltas: " + String(turnCount));
 
-        //     Serial.print("Count: ");
-        //     Serial.println(turnCount);
+            Serial.print("Count: ");
+            Serial.println(turnCount);
 
             if (turnCount == 1) {
                 inicio = currentTime;
             }
-        // }  
+        }  
     } else {
         lastSensorState = LOW;
     }
   
     if (digitalRead(sensorPin) == HIGH) {
-        // sensorPressed = false;
+        sensorPressed = false;
         lastSensorState = LOW;
     }
 
@@ -95,30 +95,30 @@ void loop() {
         }
     }*/
 
-    if (digitalRead(buttonErase) == HIGH) {
+    // if (digitalRead(buttonErase) == HIGH) {
 
-        //Aguardar 10 segundos
-        delay(10000); 
+    //     //Aguardar 10 segundos
+    //     delay(10000); 
 
-        //Verifica se o botão ainda está pressionado
-        if (digitalRead(buttonErase) == HIGH) {
+    //     //Verifica se o botão ainda está pressionado
+    //     if (digitalRead(buttonErase) == HIGH) {
 
-            if(turnCount != 0){
-              lcd.clear();
-              lcd.setCursor(0, 0);
-              lcd.print("Resetando voltas!");
-            }
+    //         if(turnCount != 0){
+    //           lcd.clear();
+    //           lcd.setCursor(0, 0);
+    //           lcd.print("Resetando voltas!");
+    //         }
 
-            //Envia a informaçao para deletar
-            Serial.write(0);
-            limpar();
+    //         //Envia a informaçao para deletar
+    //         Serial.write(0);
+    //         limpar();
 
-            // Aguarda o botão ser solto antes de continuar
-            while (digitalRead(buttonErase) == HIGH) {
-                delay(100);
-            }
-        }
-    }
+    //         // Aguarda o botão ser solto antes de continuar
+    //         while (digitalRead(buttonErase) == HIGH) {
+    //             delay(100);
+    //         }
+    //     }
+    // }
 }
 
 void limpar(){
