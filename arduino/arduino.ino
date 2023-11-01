@@ -88,12 +88,12 @@ void loop() {
     lastSensorState = currentSensorState;
 
     //Apagar informações do LCD após 5 segundos
-    /*if (currentTime - lastPressTime >= 5000) {
+    if (currentTime - lastPressTime >= 5000) {
 
         if(turnCount != 0){
           limpar();
         }
-    }*/
+    }
 
     // if (digitalRead(buttonErase) == HIGH) {
 
@@ -126,7 +126,7 @@ void limpar(){
   turnCount = 0;
   lastPressTime = currentTime;
   inicio = currentTime;
-  // sensorPressed = false;
+  sensorPressed = false;
   Serial.println("Resetting count.");
   delay(1000);
   lcd.clear();
