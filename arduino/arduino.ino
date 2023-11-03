@@ -69,8 +69,8 @@ void loop() {
             lcd.setCursor(0, 1);
             lcd.print("Voltas: " + String(turnCount));
 
-            Serial.print("Count: ");
-            Serial.println(turnCount);
+            // Serial.print("Count: ");
+            // Serial.println(turnCount);
 
             if (turnCount == 1) {
                 inicio = currentTime;

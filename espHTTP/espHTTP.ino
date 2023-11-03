@@ -3,8 +3,9 @@
 #include <ArduinoJson.h>
 
 int gaiolaId=1;
-String server =  "http://172.22.44.76:8080/api/Turns";
-String serverRoda =  "http://172.22.44.76:8080/api/Cage"+ String(gaiolaId);;
+String server = "http://172.22.44.76:8080";
+String serverTurns =  server +"/api/Turns";
+String serverRoda =  server + "/api/Cage"+ String(gaiolaId);;
 String dados;
 const char* ssid = "AndroidAPE958";                    
 const char* senha = "12345678";
@@ -50,37 +51,38 @@ void loop() {
   unsigned long currentTime = millis();
   
   if (Serial2.available() > 0) {
-      turnCount = Serial2.read();
-      lastPressTime = currentTime;
+    turnCount = Serial2.read();
+    lastPressTime = currentTime;
 
-      if(turnCount == 0){
-        //Apagar informações do banco
-        //apagarBanco();
-      }
+//  Função para apagar no banco ao apertar no botão    
+    // if(turnCount == 0){
+      //Apagar informações do banco
+      //apagarBanco();
+    // }
 
-      else if(turnCount == 1){
-          inicio = currentTime;
-          Serial.println("Message Received: ");
-          Serial.println(turnCount);
-      } // primeira vez
+    else if(turnCount == 1){
+        inicio = currentTime;
+        // Serial.println("Message Received: ");
+        // Serial.println(turnCount);
+    } // primeira vez
       
   }
 
   if(currentTime - lastPressTime > 5000){
     tempoPercorrido = ((lastPressTime - inicio) / 1000);
     
-    if(tempoPercorrido!=0){
-        Serial.print("Tempo da atividade: ");
-        Serial.print(tempoPercorrido);
-        Serial.println(" segundos.");
+    // if(tempoPercorrido!=0){
+    //     Serial.print("Tempo da atividade: ");
+    //     Serial.print(tempoPercorrido);
+    //     Serial.println(" segundos.");
 
         getDiametro();
 
         distanciaPercorrida = circunferencia * turnCount;
         
-        Serial.print("Distância percorrida: ");
-        Serial.print(distanciaPercorrida);
-        Serial.println(" metros.");
+        // Serial.print("Distância percorrida: ");
+        // Serial.print(distanciaPercorrida);
+        // Serial.println(" metros.");
 
         velocidadeMedia = distanciaPercorrida / (tempoPercorrido * 60);
         velocidadeMedia = (velocidadeMedia * 3.6) * 60;
@@ -133,42 +135,43 @@ void postVolta(int velocidadeMedia, int tempoAtividade, float distanciaPercorrid
                  "}";
   
   HTTPClient http;
-  http.begin(server);
+  http.begin(serverTurns);
   http.addHeader("Content-Type", "application/json"); 
   int httpCode = http.POST(dados); 
   Serial.println(dados);
 
-  if (httpCode == HTTP_CODE_OK) {
-    Serial.println("Resposta: ");
-    String payload = http.getString();
-    Serial.println(payload);
-  } else {
-    Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
-    Serial.println(http.errorToString(httpCode).c_str());
-    delay(500);
-  }
+  // if (httpCode == HTTP_CODE_OK) {
+    // Serial.println("Resposta: ");
+  //   String payload = http.getString();
+  //   Serial.println(payload);
+  // } 
+  // else {
+    // Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
+    // Serial.println(http.errorToString(httpCode).c_str());
+  //   delay(500);
+  // }
 
   http.end();
 }
 
 void apagarBanco() {
   turnCount = 0;
-  String url = server + "/" + String(gaiolaId);
+  String url = serverTurns + "/" + String(gaiolaId);
 
   HTTPClient http;
   http.begin(url);
   http.addHeader("Content-Type", "application/json"); 
   int httpCode = http.sendRequest("DELETE");
 
-  if (httpCode == HTTP_CODE_OK) {
-    Serial.println("Resposta: ");
-    String payload = http.getString();
-    Serial.println(payload);
-  } else {
-    Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
-    Serial.println(http.errorToString(httpCode).c_str());
-    delay(500);
-  }
+  // if (httpCode == HTTP_CODE_OK) {
+  //   Serial.println("Resposta: ");
+  //   String payload = http.getString();
+  //   Serial.println(payload);
+  // } else {
+    // Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
+    // Serial.println(http.errorToString(httpCode).c_str());
+  //   delay(500);
+  // }
 
   http.end();
 }
