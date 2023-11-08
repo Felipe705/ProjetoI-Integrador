@@ -1,14 +1,17 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 int gaiolaId=1;
 String server = "http://172.22.44.76:8080";
 String serverTurns =  server +"/api/Turns";
 String serverRoda =  server + "/api/Cage"+ String(gaiolaId);;
 String dados;
-const char* ssid = "AndroidAPE958";                    
-const char* senha = "12345678";
+const char* ssid = "IOT";                    
+const char* senha = "teste12345";
 
 // Definição da pinagem
 #define RXp2 16
@@ -16,6 +19,7 @@ const char* senha = "12345678";
 
 // Variaveis calculo da roda
 int turnCount = 0;
+int turnLCD = 0;
 float inicio = 0;
 unsigned long lastPressTime = 0;
 // unsigned long lastLastPressTime = 0;
@@ -35,16 +39,17 @@ void setup() {
 
   WiFi.mode(WIFI_MODE_STA);
   WiFi.begin(ssid, senha);
-  while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.println("Tentando conectar a rede");
-  }
+  // while(WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.println("Tentando conectar a rede");
+  // }
 
-  confiNTP();
+  // confiNTP();
 
   Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
 
   circunferencia = pi * diametro;
+  iniciarLCD();
 }
 
 void loop() {
@@ -52,6 +57,8 @@ void loop() {
   
   if (Serial2.available() > 0) {
     turnCount = Serial2.read();
+    turnLCD++;
+    atualizarLCD();
     lastPressTime = currentTime;
 
 //  Função para apagar no banco ao apertar no botão    
@@ -60,10 +67,9 @@ void loop() {
       //apagarBanco();
     // }
 
-    else if(turnCount == 1){
+    if(turnCount == 1){
         inicio = currentTime;
         // Serial.println("Message Received: ");
-        // Serial.println(turnCount);
     } // primeira vez
       
   }
@@ -71,36 +77,33 @@ void loop() {
   if(currentTime - lastPressTime > 5000){
     tempoPercorrido = ((lastPressTime - inicio) / 1000);
     
-    // if(tempoPercorrido!=0){
+    if(tempoPercorrido!=0){
     //     Serial.print("Tempo da atividade: ");
     //     Serial.print(tempoPercorrido);
     //     Serial.println(" segundos.");
 
-        getDiametro();
+      getDiametro();
 
-        distanciaPercorrida = circunferencia * turnCount;
-        
-        // Serial.print("Distância percorrida: ");
-        // Serial.print(distanciaPercorrida);
-        // Serial.println(" metros.");
+      distanciaPercorrida = circunferencia * turnCount;
+      
+      // Serial.print("Distância percorrida: ");
+      // Serial.print(distanciaPercorrida);
+      // Serial.println(" metros.");
 
-        velocidadeMedia = distanciaPercorrida / (tempoPercorrido * 60);
-        velocidadeMedia = (velocidadeMedia * 3.6) * 60;
-        
-        Serial.print("Velocidade média: ");
-        Serial.print(velocidadeMedia);
-        Serial.println(" km/h");
-
-        postVolta(velocidadeMedia, tempoPercorrido, distanciaPercorrida, turnCount);
+      velocidadeMedia = distanciaPercorrida / (tempoPercorrido * 60);
+      velocidadeMedia = (velocidadeMedia * 3.6) * 60;
+      
+      postVolta(velocidadeMedia, tempoPercorrido, distanciaPercorrida, turnCount);
     }
 
     turnCount = 0;
     lastPressTime = currentTime;
     inicio = currentTime;
-    Serial.println("Resetting count.");
+    // Serial.println("Resetting count.");
   } 
 }
 
+// Atualiza o diâmetro e recalcula a circuferência
 void getDiametro() {
   DynamicJsonDocument doc(1024);
   HTTPClient http;
@@ -109,18 +112,19 @@ void getDiametro() {
   int httpCode = http.GET(); 
 
   if (httpCode == HTTP_CODE_OK) {
-    Serial.println("Resposta: ");
+    // Serial.println("Resposta: ");
     String payload = http.getString(); // armazena a resposta da requisição
 
     deserializeJson(doc, payload);
     String diametroS = doc[String("diametro")];
     diametro = diametroS.toFloat();
     circunferencia = pi * diametro;
-  } else {
-    Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
-    Serial.println(http.errorToString(httpCode).c_str()); // Imprime a mensagem de erro da requisição
-    delay(500);
-  }
+  } 
+  // else {
+  //   Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
+  //   Serial.println(http.errorToString(httpCode).c_str()); // Imprime a mensagem de erro da requisição
+  //   delay(500);
+  // }
 
   http.end();
 }
@@ -138,18 +142,18 @@ void postVolta(int velocidadeMedia, int tempoAtividade, float distanciaPercorrid
   http.begin(serverTurns);
   http.addHeader("Content-Type", "application/json"); 
   int httpCode = http.POST(dados); 
-  Serial.println(dados);
+  // Serial.println(dados);
 
-  // if (httpCode == HTTP_CODE_OK) {
+  if (httpCode == HTTP_CODE_OK) {
     // Serial.println("Resposta: ");
-  //   String payload = http.getString();
-  //   Serial.println(payload);
-  // } 
-  // else {
-    // Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
-    // Serial.println(http.errorToString(httpCode).c_str());
-  //   delay(500);
-  // }
+    String payload = http.getString();
+    // Serial.println(payload);
+  } 
+  else {
+    Serial.print("HTTP POST... Erro. Mensagem de Erro: ");
+    Serial.println(http.errorToString(httpCode).c_str());
+    delay(500);
+  }
 
   http.end();
 }
@@ -174,4 +178,26 @@ void apagarBanco() {
   // }
 
   http.end();
+}
+
+// Funções LCD
+void atualizarLCD() {
+  lcd.setCursor(0, 1);
+  lcd.print("");
+  lcd.print("Voltas: "+ String(turnLCD));
+  delay(50);
+}
+
+void iniciarLCD() {
+  lcd.init();
+  lcd.backlight();
+  delay(1000);
+  lcd.clear();
+  lcd.print("Iniciando");
+  delay(1000);
+  lcd.setCursor(0, 0);
+  delay(1000);
+  lcd.print("Gaiola 1 ");
+  lcd.setCursor(0, 1);
+  lcd.print("Voltas: "+ String(turnLCD));
 }
